@@ -421,3 +421,70 @@ app.post('/deactivate', async (req, res) => {
   }
 });
 
+// endpoint untuk reactivate key
+app.post('/reactivate', async (req, res) => {
+  try {
+    const { apiKey } = req.body;
+    
+    if (!apiKey) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'API key is required' 
+      });
+    }
+    
+    const [result] = await db.query(
+      'UPDATE api_keys SET is_active = TRUE WHERE api_key = ?',
+      [apiKey]
+    );
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'API key not found' 
+      });
+    }
+    
+    res.json({ 
+      success: true,
+      message: 'API key reactivated'
+    });
+  } catch (error) {
+    console.error('Error reactivating key:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to reactivate key',
+      details: error.message
+    });
+  }
+});
+
+// endpoint info
+app.get('/info', (req, res) => {
+  res.json({
+    service: 'API Key Generator with MySQL',
+    version: '2.0',
+    database: 'MySQL',
+    endpoints: {
+      create: 'POST /create - Generate server API key + save to DB',
+      saveKey: 'POST /save-key - Save client-generated key to DB',
+      validate: 'POST /validate - Validate API key (DB + format)',
+      checkapi: 'POST /checkapi - Check API key details (support body/header/query)',
+      keys: 'GET /keys - List all API keys from database',
+      deactivate: 'POST /deactivate - Deactivate API key',
+      reactivate: 'POST /reactivate - Reactivate API key'
+    },
+    checkApiExamples: {
+      body: { apiKey: 'sk-itumy-v1-xxx_yyy' },
+      header: { 'x-api-key': 'sk-itumy-v1-xxx_yyy' },
+      query: '/checkapi?apiKey=sk-itumy-v1-xxx_yyy'
+    }
+  });
+});
+
+// ============ START SERVER ============
+app.listen(port, () => {
+  console.log(`🚀 Server berjalan di http://localhost:${port}`);
+  console.log(`📦 Database: MySQL (apikey_db)`);
+  console.log(`📝 Endpoints: http://localhost:${port}/info`);
+});
