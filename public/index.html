@@ -249,4 +249,134 @@
     <footer>© 2025 Annisa's API Tool</footer>
   </div>
 
-  
+  <div id="toast" class="toast" role="status" aria-live="assertive">
+    <span class="dot" aria-hidden="true"></span>
+    <span id="toastText">Copied to clipboard</span>
+  </div>
+
+  <script>
+    const genBtn = document.getElementById('genBtn');
+    const regenBtn = document.getElementById('regenBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const apikeyEl = document.getElementById('apikey');
+    const toast = document.getElementById('toast');
+    const toastText = document.getElementById('toastText');
+    const logoImg = document.getElementById('logoImg');
+    const logoPlaceholder = document.getElementById('logoPlaceholder');
+
+    // Cek apakah ada logo yang berhasil di-load
+    logoImg.onload = function() {
+      this.style.display = 'block';
+      logoPlaceholder.style.display = 'none';
+    };
+
+    function makeKey(length = 32) {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let key = '';
+      for (let i = 0; i < length; i++) {
+        key += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return key;
+    }
+
+    function showToast(message = 'Copied to clipboard') {
+      toastText.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    async function copyToClipboard(text) {
+      if (!text) {
+        showToast('No API key to copy');
+        return false;
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast('API key copied');
+          return true;
+        } catch (e) {
+          // fallback below
+        }
+      }
+      try {
+        const tmp = document.createElement('textarea');
+        tmp.value = text;
+        tmp.setAttribute('readonly', '');
+        tmp.style.position = 'absolute';
+        tmp.style.left = '-9999px';
+        document.body.appendChild(tmp);
+        tmp.select();
+        tmp.setSelectionRange(0, tmp.value.length);
+        const ok = document.execCommand('copy');
+        document.body.removeChild(tmp);
+        if (ok) {
+          showToast('API key copied (fallback)');
+          return true;
+        } else {
+          showToast('Unable to copy');
+          return false;
+        }
+      } catch (err) {
+        showToast('Copy failed');
+        return false;
+      }
+    }
+
+    // ========== TAMBAHKAN FUNCTION INI DI SINI ==========
+    async function saveKeyToServer(key) {
+  try {
+    const response = await fetch('/save-key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey: key })
+    });
+    const data = await response.json();
+    if (data.success) {
+      console.log('Key saved to database');
+    }
+  } catch (error) {
+    console.error('Failed to save key:', error);
+  }
+}
+
+genBtn.addEventListener('click', async () => {
+  const k = makeKey(32);
+  apikeyEl.value = k;
+  copyBtn.disabled = false;
+  apikeyEl.focus();
+  apikeyEl.setSelectionRange(0, apikeyEl.value.length);
+  showToast('API key generated');
+  await saveKeyToServer(k); // ⬅️ TAMBAHKAN INI
+});
+
+regenBtn.addEventListener('click', async () => {
+  const k = makeKey(32);
+  apikeyEl.value = k;
+  copyBtn.disabled = false;
+  apikeyEl.focus();
+  apikeyEl.setSelectionRange(0, apikeyEl.value.length);
+  showToast('API key regenerated');
+  await saveKeyToServer(k); // ⬅️ TAMBAHKAN INI
+});
+
+    copyBtn.addEventListener('click', async () => {
+      await copyToClipboard(apikeyEl.value);
+    });
+
+    apikeyEl.addEventListener('click', () => {
+      if (apikeyEl.value) {
+        apikeyEl.setSelectionRange(0, apikeyEl.value.length);
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'g') {
+        e.preventDefault();
+        genBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>
