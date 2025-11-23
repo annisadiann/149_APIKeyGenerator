@@ -43,6 +43,180 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+app.post('/register-admin', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validasi sederhana
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email dan Password wajib diisi!' });
+    }
+
+    // Cek apakah email sudah ada di tabel admins
+    const [existing] = await db.query('SELECT id FROM admins WHERE email = ?', [email]);
+    if (existing.length > 0) {
+      return res.status(409).json({ success: false, message: 'Email admin sudah terdaftar!' });
+    }
+
+    // Simpan ke database
+    await db.query('INSERT INTO admins (email, password) VALUES (?, ?)', [email, password]);
+
+    res.json({ success: true, message: 'Admin berhasil didaftarkan' });
+
+  } catch (error) {
+    console.error('Error register admin:', error);
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan server', error: error.message });
+  }
+});
+
+// 2. Endpoint Login Admin
+app.post('/login-admin', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const [rows] = await db.query(
+      'SELECT * FROM admins WHERE email = ? AND password = ?', 
+      [email, password]
+    );
+
+    if (rows.length > 0) {
+      res.json({ success: true, message: 'Login berhasil' });
+    } else {
+      res.status(401).json({ success: false, message: 'Email atau password salah' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ========== ENDPOINT BARU: REGISTER USER + GENERATE API KEY ==========
+app.post('/register-user', async (req, res) => {
+  try {
+    const { firstName, lastName, email, apiKey } = req.body;
+
+    // VALIDASI INPUT
+    if (!firstName || !lastName || !email || !apiKey) {
+      return res.status(400).json({
+        success: false,
+        error: 'All fields are required (firstName, lastName, email, apiKey)'
+      });
+    }
+
+    // Validasi email format
+    if (!email.includes('@')) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid email format' 
+      });
+    }
+
+    // Cek apakah email sudah terdaftar
+    const [existingEmail] = await db.query(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+    
+    if (existingEmail.length > 0) {
+      return res.status(409).json({ 
+        success: false,
+        error: 'Email already registered' 
+      });
+    }
+
+    // Cek apakah API key sudah ada
+    const [existingKey] = await db.query(
+      'SELECT id FROM users WHERE api_key = ?',
+      [apiKey]
+    );
+    
+    if (existingKey.length > 0) {
+      return res.status(409).json({ 
+        success: false,
+        error: 'API key already exists' 
+      });
+    }
+
+    // Simpan user ke database
+    const [result] = await db.query(
+      'INSERT INTO users (first_name, last_name, email, api_key) VALUES (?, ?, ?, ?)',
+      [firstName, lastName, email, apiKey]
+    );
+    
+    res.json({ 
+      success: true,
+      message: 'User registered successfully',
+      data: {
+        id: result.insertId,
+        firstName,
+        lastName,
+        email,
+        apiKey
+      }
+    });
+
+  } catch (error) {
+    console.error('Error registering user:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to register user',
+      details: error.message
+    });
+  }
+});
+
+// ========== ENDPOINT: GET ALL USERS ==========
+app.get('/users', async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      'SELECT id, first_name, last_name, email, api_key, created_at, is_active FROM users ORDER BY created_at DESC'
+    );
+    
+    res.json({ 
+      success: true,
+      count: rows.length,
+      users: rows
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to fetch users',
+      details: error.message
+    });
+  }
+});
+
+// ========== ENDPOINT: GET USER BY EMAIL ==========
+app.get('/user/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    
+    const [rows] = await db.query(
+      'SELECT id, first_name, last_name, email, api_key, created_at, is_active FROM users WHERE email = ?',
+      [email]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'User not found' 
+      });
+    }
+    
+    res.json({ 
+      success: true,
+      user: rows[0]
+    });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to fetch user',
+      details: error.message
+    });
+  }
+});
+
 // endpoint untuk membuat API key (server-generated) + simpan ke DB
 app.post('/create', async (req, res) => {
   try {
@@ -85,7 +259,7 @@ app.post('/create', async (req, res) => {
 // endpoint untuk save client-generated key
 app.post('/save-key', async (req, res) => {
   try {
-    const { apiKey } = req.body;
+    const { apiKey, firstName, lastName, email } = req.body;
     
     if (!apiKey) {
       return res.status(400).json({ 
@@ -108,11 +282,18 @@ app.post('/save-key', async (req, res) => {
       });
     }
     
-    // Simpan ke database
-    await db.query(
-      'INSERT INTO api_keys (api_key, key_type) VALUES (?, ?)',
-      [apiKey, 'client']
-    );
+    // Simpan ke database dengan data user jika ada
+    if (firstName && lastName && email) {
+      await db.query(
+        'INSERT INTO api_keys (api_key, key_type, first_name, last_name, email) VALUES (?, ?, ?, ?, ?)',
+        [apiKey, 'client', firstName, lastName, email]
+      );
+    } else {
+      await db.query(
+        'INSERT INTO api_keys (api_key, key_type) VALUES (?, ?)',
+        [apiKey, 'client']
+      );
+    }
     
     res.json({ 
       success: true,
@@ -140,7 +321,31 @@ app.post('/validate', async (req, res) => {
   }
   
   try {
-    // Cari di database dulu
+    // Cek di tabel users dulu
+    const [userRows] = await db.query(
+      'SELECT * FROM users WHERE api_key = ? AND is_active = TRUE',
+      [apiKey]
+    );
+    
+    if (userRows.length > 0) {
+      const userData = userRows[0];
+      
+      return res.json({ 
+        valid: true,
+        source: 'users_table',
+        data: {
+          id: userData.id,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          email: userData.email,
+          apiKey: userData.api_key,
+          createdAt: userData.created_at,
+          isActive: userData.is_active
+        }
+      });
+    }
+
+    // Fallback: Cari di tabel api_keys
     const [rows] = await db.query(
       'SELECT * FROM api_keys WHERE api_key = ? AND is_active = TRUE',
       [apiKey]
@@ -157,11 +362,14 @@ app.post('/validate', async (req, res) => {
       
       return res.json({ 
         valid: true,
-        source: 'database',
+        source: 'api_keys_table',
         data: {
           id: keyData.id,
           apiKey: keyData.api_key,
           keyType: keyData.key_type,
+          firstName: keyData.first_name,
+          lastName: keyData.last_name,
+          email: keyData.email,
           createdAt: keyData.created_at,
           lastUsed: new Date(),
           isActive: keyData.is_active
@@ -175,7 +383,7 @@ app.post('/validate', async (req, res) => {
   
   // Fallback: cek format API key jika tidak ada di database
   const serverKeyPattern = /^sk-itumy-v1-[a-z0-9]+_[A-Za-z0-9_-]+$/;
-  const clientKeyPattern = /^[A-Za-z0-9]{32}$/;
+  const clientKeyPattern = /^[a-f0-9]{64}$/; // Update: 64 char hexadecimal
   
   const isServerKey = serverKeyPattern.test(apiKey);
   const isClientKey = clientKeyPattern.test(apiKey);
@@ -206,7 +414,7 @@ app.post('/validate', async (req, res) => {
     return res.json({ 
       valid: true, 
       source: 'format-check',
-      format: '32-character alphanumeric',
+      format: '64-character hexadecimal',
       warning: 'Not found in database, validated by format only'
     });
   }
@@ -232,7 +440,50 @@ app.post('/checkapi', async (req, res) => {
   }
   
   try {
-    // Cek di database dulu
+    // Cek di tabel users dulu
+    const [userRows] = await db.query(
+      'SELECT * FROM users WHERE api_key = ?',
+      [apiKey]
+    );
+    
+    if (userRows.length > 0) {
+      const userData = userRows[0];
+      
+      if (!userData.is_active) {
+        return res.status(403).json({ 
+          success: false,
+          valid: false, 
+          message: 'API key sudah tidak aktif'
+        });
+      }
+      
+      const now = new Date();
+      const createdAt = new Date(userData.created_at);
+      const ageInDays = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
+      
+      return res.json({ 
+        success: true,
+        valid: true, 
+        source: 'users_table',
+        message: 'API key valid (from users database)',
+        data: {
+          id: userData.id,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          email: userData.email,
+          apiKey: userData.api_key,
+          createdAt: userData.created_at,
+          isActive: userData.is_active,
+          age: {
+            days: ageInDays,
+            hours: Math.floor((now - createdAt) / (1000 * 60 * 60)),
+            readable: ageInDays === 0 ? 'Today' : `${ageInDays} day(s) ago`
+          }
+        }
+      });
+    }
+
+    // Cek di tabel api_keys
     const [rows] = await db.query(
       'SELECT * FROM api_keys WHERE api_key = ?',
       [apiKey]
@@ -262,12 +513,15 @@ app.post('/checkapi', async (req, res) => {
       return res.json({ 
         success: true,
         valid: true, 
-        source: 'database',
-        message: 'API key valid (from database)',
+        source: 'api_keys_table',
+        message: 'API key valid (from api_keys database)',
         data: {
           id: keyData.id,
           apiKey: keyData.api_key,
           keyType: keyData.key_type,
+          firstName: keyData.first_name,
+          lastName: keyData.last_name,
+          email: keyData.email,
           createdAt: keyData.created_at,
           lastUsed: keyData.last_used,
           isActive: keyData.is_active,
@@ -286,7 +540,7 @@ app.post('/checkapi', async (req, res) => {
   
   // Fallback: cek format API key
   const serverKeyPattern = /^sk-itumy-v1-[a-z0-9]+_[A-Za-z0-9_-]+$/;
-  const clientKeyPattern = /^[A-Za-z0-9]{32}$/;
+  const clientKeyPattern = /^[a-f0-9]{64}$/;
   
   const isServerKey = serverKeyPattern.test(apiKey);
   const isClientKey = clientKeyPattern.test(apiKey);
@@ -299,7 +553,7 @@ app.post('/checkapi', async (req, res) => {
       apiKey: apiKey,
       acceptedFormats: {
         server: 'sk-itumy-v1-{timestamp}_{random}',
-        client: '32 karakter alphanumeric (A-Za-z0-9)'
+        client: '64 karakter hexadecimal (a-f0-9)'
       }
     });
   }
@@ -314,7 +568,7 @@ app.post('/checkapi', async (req, res) => {
       data: {
         apiKey: apiKey,
         type: 'client-generated',
-        format: 'Simple 32-character key',
+        format: '64-character hexadecimal key',
         keyLength: apiKey.length,
         generatedFrom: 'HTML Frontend',
         warning: 'Not found in database, validated by format only'
@@ -365,7 +619,7 @@ app.post('/checkapi', async (req, res) => {
 app.get('/keys', async (req, res) => {
   try {
     const [rows] = await db.query(
-      'SELECT id, api_key, key_type, created_at, last_used, is_active FROM api_keys ORDER BY created_at DESC LIMIT 100'
+      'SELECT id, api_key, key_type, first_name, last_name, email, created_at, last_used, is_active FROM api_keys ORDER BY created_at DESC LIMIT 100'
     );
     
     res.json({ 
@@ -463,9 +717,12 @@ app.post('/reactivate', async (req, res) => {
 app.get('/info', (req, res) => {
   res.json({
     service: 'API Key Generator with MySQL',
-    version: '2.0',
+    version: '3.0',
     database: 'MySQL',
     endpoints: {
+      registerUser: 'POST /register-user - Register user with API key',
+      users: 'GET /users - List all users',
+      userByEmail: 'GET /user/:email - Get user by email',
       create: 'POST /create - Generate server API key + save to DB',
       saveKey: 'POST /save-key - Save client-generated key to DB',
       validate: 'POST /validate - Validate API key (DB + format)',
