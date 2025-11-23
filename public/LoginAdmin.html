@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-blob { animation: blob 7s infinite; }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-pink-100 via-pink-50 to-white flex items-center justify-center p-4">
+
+    <!-- Decorative circles -->
+    <div class="absolute top-20 left-20 w-72 h-72 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+    <div class="absolute top-40 right-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+    <div class="absolute bottom-20 left-1/2 w-72 h-72 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+
+    <!-- Login Card -->
+    <div class="relative bg-white rounded-3xl shadow-2xl p-8 md:p-12 w-full max-w-md border-4 border-pink-200 z-10">
+        
+        <!-- Logo/Icon -->
+        <div class="flex justify-center mb-8">
+            <div class="bg-gradient-to-br from-pink-500 to-pink-700 p-6 rounded-full shadow-lg">
+                <i data-lucide="shield" class="text-white w-12 h-12"></i>
+            </div>
+        </div>
+
+        <!-- Title -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-pink-700 mb-2">Admin Login</h1>
+            <p class="text-gray-600">Welcome back! Please login to your account</p>
+        </div>
+
+        <!-- Error Message (Hidden by default) -->
+        <div id="error-msg" class="hidden mb-6 p-4 bg-red-100 border-2 border-red-400 rounded-lg text-red-700 text-sm">
+            Invalid email or password
+        </div>
+
+        <!-- Login Form -->
+        <div class="space-y-6">
+            <!-- Email Input -->
+            <div>
+                <label class="block text-sm font-semibold text-pink-700 mb-2">Email Address</label>
+                <div class="relative">
+                    <i data-lucide="mail" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-pink-400 w-5 h-5"></i>
+                    <input type="email" id="email" placeholder="admin@example.com"
+                        class="w-full pl-12 pr-4 py-3 border-2 border-pink-300 rounded-lg focus:border-pink-500 focus:outline-none transition-colors"
+                    />
+                </div>
+            </div>
+
+            <!-- Password Input -->
+            <div>
+                <label class="block text-sm font-semibold text-pink-700 mb-2">Password</label>
+                <div class="relative">
+                    <i data-lucide="lock" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-pink-400 w-5 h-5"></i>
+                    <input type="password" id="password" placeholder="Enter your password"
+                        class="w-full pl-12 pr-12 py-3 border-2 border-pink-300 rounded-lg focus:border-pink-500 focus:outline-none transition-colors"
+                    />
+                    <button onclick="togglePassword()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-pink-400 hover:text-pink-600">
+                        <i data-lucide="eye" id="eye-icon" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Remember Me & Forgot Password -->
+            <div class="flex items-center justify-between">
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" class="w-4 h-4 text-pink-600 border-pink-300 rounded focus:ring-pink-500" />
+                    <span class="ml-2 text-sm text-gray-600">Remember me</span>
+                </label>
+                <a href="#" class="text-sm text-pink-600 hover:text-pink-700 font-semibold">Forgot Password?</a>
+            </div>
+
+            <!-- Login Button -->
+            <button onclick="handleLogin()"
+                class="w-full bg-gradient-to-r from-pink-600 to-pink-700 text-white py-4 rounded-lg font-semibold text-lg hover:from-pink-700 hover:to-pink-800 transition-all transform hover:scale-105 shadow-lg">
+                Login
+            </button>
+        </div>
+
+        <!-- Demo Credentials Info -->
+        <div class="mt-8 p-4 bg-pink-50 border-2 border-pink-200 rounded-lg">
+            <p class="text-sm text-pink-700 font-semibold mb-2">Demo Credentials:</p>
+            <p class="text-xs text-gray-600">Email: admin@example.com</p>
+            <p class="text-xs text-gray-600">Password: admin123</p>
+        </div>
+        
+        <!-- Back Link -->
+        <div class="mt-4 text-center">
+             <a href="index.html" class="text-sm text-pink-500 hover:underline">← Back to Registration</a>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        function togglePassword() {
+            const passInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eye-icon');
+            
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                eyeIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                passInput.type = 'password';
+                eyeIcon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons(); 
+        }
+
+        // Ubah fungsi ini jadi ASYNC agar bisa fetch ke database
+        async function handleLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('error-msg');
+            const btn = document.querySelector('button[onclick="handleLogin()"]');
+
+            errorMsg.classList.add('hidden');
+
+            if (!email || !password) {
+                errorMsg.textContent = 'Please fill in all fields';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            // --- BAGIAN INI YANG DIPERBAIKI (KONEK KE DATABASE) ---
+            try {
+                // Ubah tombol jadi loading
+                const originalText = btn.textContent;
+                btn.textContent = 'Loading...';
+                btn.disabled = true;
+
+                // Kirim data ke Backend (index.js)
+                const response = await fetch('/login-admin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Login Berhasil -> Masuk Dashboard
+                    // (Opsional) Simpan status login di localStorage jika perlu
+                    localStorage.setItem('isAdminLoggedIn', 'true');
+                    window.location.href = 'DashboardAdmin.html';
+                } else {
+                    // Login Gagal (Password salah / Email tidak ada)
+                    errorMsg.textContent = result.message || 'Invalid email or password';
+                    errorMsg.classList.remove('hidden');
+                }
+
+            } catch (err) {
+                console.error(err);
+                errorMsg.textContent = 'Server Connection Error. Pastikan Node.js jalan.';
+                errorMsg.classList.remove('hidden');
+            } finally {
+                // Balikin tombol seperti semula
+                btn.textContent = 'Login';
+                btn.disabled = false;
+            }
+        }
+        
+        // Enter key trigger
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
+    </script>
+</body>
+</html>
