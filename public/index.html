@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daftar User & Generate API Key</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+    :root{
+      --bg1: #ffb6c1;
+      --bg2: #ffc1cc;
+      --card: #ffe4ec;
+      --primary: #ff69b4;
+      --primary-contrast: #fff;
+      --muted: #9c5673;
+      --success: #2bb673;
+      --nav-bg: rgba(255, 255, 255, 0.85);
+    }
+
+    *{box-sizing: border-box;}
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 80px 20px 20px 20px;
+    }
+
+    /* --- STYLE NAVIGASI --- */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: var(--nav-bg);
+      backdrop-filter: blur(10px);
+      padding: 15px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      z-index: 1000;
+    }
+
+    .nav-brand {
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: var(--primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-menu {
+      display: flex;
+      list-style: none;
+      gap: 30px;
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav-link {
+      text-decoration: none;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: color 0.3s ease;
+      position: relative;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--primary);
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: -4px;
+      left: 0;
+      background-color: var(--primary);
+      transition: width 0.3s ease;
+    }
+
+    .nav-link:hover::after, .nav-link.active::after {
+      width: 100%;
+    }
+
+    .btn-login {
+      background: var(--primary);
+      color: white;
+      padding: 8px 20px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 10px rgba(255, 105, 180, 0.3);
+      transition: transform 0.2s;
+    }
+
+    .btn-login:hover {
+      transform: translateY(-2px);
+    }
+
+    .container {
+      background: var(--card);
+      box-shadow: 8px 8px 20px rgba(0,0,0,0.12),
+                  -8px -8px 20px rgba(255,255,255,0.6);
+      border-radius: 20px;
+      padding: 32px;
+      width: 520px;
+      max-width: 100%;
+      text-align: left;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo-section {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .logo-wrapper {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .logo-placeholder {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--primary), #ff1493);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      color: #d63384;
+      font-size: 1.4rem;
+      margin: 0;
+      font-weight: 700;
+    }
+
+    p.lead {
+      margin: 8px 0 24px 0;
+      color: #7a2e52;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      color: #7a2e52;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    input[type="text"],
+    input[type="email"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      background: #fff;
+      box-shadow: inset 3px 3px 6px rgba(0,0,0,0.08),
+                  inset -3px -3px 6px rgba(255,255,255,0.6);
+      color: #333;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus {
+      outline: none;
+      box-shadow: inset 3px 3px 8px rgba(0,0,0,0.12),
+                  inset -3px -3px 8px rgba(255,255,255,0.7);
+    }
+
+    .api-key-section {
+      background: rgba(255,255,255,0.6);
+      padding: 18px;
+      border-radius: 16px;
+      margin-bottom: 18px;
+      box-shadow: inset 2px 2px 6px rgba(0,0,0,0.06);
+    }
+
+    .api-key-section label {
+      display: block;
+      font-weight: 600;
+      color: #7a2e52;
+      margin-bottom: 10px;
+      font-size: 0.95rem;
+    }
+
+    .api-key-box {
+      background: #fff;
+      padding: 12px 14px;
+      border-radius: 12px;
+      box-shadow: inset 3px 3px 6px rgba(0,0,0,0.08),
+                  inset -3px -3px 6px rgba(255,255,255,0.6);
+      min-height: 48px;
+      font-family: monospace;
+      font-size: 0.9rem;
+      color: #333;
+      word-break: break-all;
+      margin-bottom: 12px;
+    }
+
+    .api-key-box.empty {
+      color: #999;
+      font-style: italic;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 11px 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--primary-contrast);
+      background: var(--primary);
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease;
+      box-shadow: 4px 4px 10px rgba(0,0,0,0.12),
+                  -3px -3px 8px rgba(255,255,255,0.4);
+    }
+    
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn.secondary {
+      background: #6b2a4a;
+      color: #fff;
+    }
+
+    .btn.copy {
+      background: #fff;
+      color: #6b2a4a;
+      padding: 11px 18px;
+    }
+
+    .btn.save {
+      background: #888;
+      color: #fff;
+      width: 100%;
+      margin-top: 8px;
+      padding: 13px;
+      font-size: 1rem;
+    }
+
+    .success-message {
+      background: #d4edda;
+      border: 2px solid #28a745;
+      color: #155724;
+      padding: 16px;
+      border-radius: 12px;
+      margin-top: 18px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .success-message strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    footer {
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      bottom: 28px;
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s ease, transform .22s ease;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
+    .toast .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 10px rgba(43,182,115,0.25);
+    }
+
+    @media (max-width:560px){
+      .container{
+        padding: 24px;
+        width: 94%;
+      }
+      h1 {
+        font-size: 1.2rem;
+      }
+      .btn-group {
+        flex-direction: column;
+      }
+      .btn {
+        width: 100%;
+      }
+      
+      .navbar {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .nav-menu {
+        gap: 15px;
+      }
+      body {
+        padding-top: 120px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">
+      <span>APIKEY</span>
+    </a>
+    <ul class="nav-menu">
+      <li><a href="index.html" class="nav-link active">Beranda</a></li>
+      <li><a href="DashboardAdmin.html" class="nav-link">Dashboard</a></li>
+      <li><a href="RegisterAdmin.html" class="nav-link">Register Admin</a></li>
+    </ul>
+    
+    <a href="LoginAdmin.html" class="btn-login">Admin Login</a>
+  </nav>
+
+  <div class="container" role="main">
+    
+    <div class="logo-section">
+      <div class="logo-wrapper">
+        <img id="logoImg" src="meng.jpg" alt="logo" style="display:none;" onerror="this.style.display='none'; document.getElementById('logoPlaceholder').style.display='flex';">
+        <div id="logoPlaceholder" class="logo-placeholder">A</div>
+      </div>
+    </div>
+
+    <div class="header">
+      <h1>Daftar User & Generate API Key</h1>
+    </div>
+
+    <p class="lead">Lengkapi data user dan generate API key untuk akses sistem.</p>
+
+    <div class="form-group">
+      <label for="firstName">Nama Depan:</label>
+      <input type="text" id="firstName" placeholder="Masukkan nama depan" />
+    </div>
+
+    <div class="form-group">
+      <label for="lastName">Nama Belakang:</label>
+      <input type="text" id="lastName" placeholder="Masukkan nama belakang" />
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email:</label>
+      <input type="email" id="email" placeholder="user@gmail.com" />
+    </div>
+
+    <div class="api-key-section">
+      <label>API Key Anda:</label>
+      <div id="apiKeyDisplay" class="api-key-box empty">
+        Klik tombol Generate Key untuk membuat API Key
+      </div>
+      <div class="btn-group">
+        <button id="genBtn" class="btn">Generate Key</button>
+        <button id="copyBtn" class="btn copy" disabled>Copy</button>
+      </div>
+    </div>
+
+    <button id="saveBtn" class="btn save" disabled>Simpan Data User dan API Key</button>
+
+    <div id="successMessage" class="success-message" style="display:none;">
+      <strong>User dan API key berhasil dibuat!</strong>
+      Silakan simpan API Key Anda, karena tidak akan ditampilkan lagi.
+    </div>
+
+    <footer>© 2025 Annisa's API Tool</footer>
+  </div>
+
+  <div id="toast" class="toast" role="status">
+    <span class="dot"></span>
+    <span id="toastText">Notification</span>
+  </div>
+
+  <script>
+    const firstNameInput = document.getElementById('firstName');
+    const lastNameInput = document.getElementById('lastName');
+    const emailInput = document.getElementById('email');
+    const genBtn = document.getElementById('genBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const apiKeyDisplay = document.getElementById('apiKeyDisplay');
+    const successMessage = document.getElementById('successMessage');
+    const toast = document.getElementById('toast');
+    const toastText = document.getElementById('toastText');
+    const logoImg = document.getElementById('logoImg');
+    const logoPlaceholder = document.getElementById('logoPlaceholder');
+
+    let currentApiKey = '';
+
+    logoImg.onload = function() {
+      this.style.display = 'block';
+      logoPlaceholder.style.display = 'none';
+    };
+
+    function makeKey() {
+      const chars = 'abcdef0123456789';
+      let key = '';
+      for (let i = 0; i < 64; i++) {
+        key += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return key;
+    }
+
+    function showToast(message) {
+      toastText.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    async function copyToClipboard(text) {
+      if (!text) {
+        showToast('No API key to copy');
+        return false;
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('API key copied');
+        return true;
+      } catch (e) {
+        try {
+          const tmp = document.createElement('textarea');
+          tmp.value = text;
+          tmp.style.position = 'absolute';
+          tmp.style.left = '-9999px';
+          document.body.appendChild(tmp);
+          tmp.select();
+          document.execCommand('copy');
+          document.body.removeChild(tmp);
+          showToast('API key copied');
+          return true;
+        } catch (err) {
+          showToast('Copy failed');
+          return false;
+        }
+      }
+    }
+
+    async function saveKeyToServer(key) {
+      try {
+        const response = await fetch('/save-key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ apiKey: key })
+        });
+        const data = await response.json();
+        if (data.success) {
+          console.log('Key saved to database');
+        }
+      } catch (error) {
+        console.error('Failed to save key:', error);
+      }
+    }
+
+    genBtn.addEventListener('click', async () => {
+      const key = makeKey();
+      currentApiKey = key;
+      apiKeyDisplay.textContent = key;
+      apiKeyDisplay.classList.remove('empty');
+      copyBtn.disabled = false;
+      saveBtn.disabled = false;
+      successMessage.style.display = 'none';
+      showToast('API key generated');
+      await saveKeyToServer(key);
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      await copyToClipboard(currentApiKey);
+    });
+
+   saveBtn.addEventListener('click', async () => {
+      const firstName = firstNameInput.value.trim();
+      const lastName = lastNameInput.value.trim();
+      const email = emailInput.value.trim();
+
+      // Validasi input kosong
+      if (!firstName || !lastName || !email || !currentApiKey) {
+        showToast('Mohon lengkapi semua data dan generate API Key!');
+        return;
+      }
+
+      // Validasi format email sederhana
+      if (!email.includes('@')) {
+        showToast('Mohon masukkan email yang valid!');
+        return;
+      }
+
+      // --- BAGIAN INI YANG DITAMBAHKAN (Kirim ke Backend) ---
+      try {
+        saveBtn.textContent = 'Menyimpan...'; // Ubah teks tombol biar user tau lagi loading
+        saveBtn.disabled = true;
+
+        const response = await fetch('/register-user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+            apiKey: currentApiKey
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Jika sukses
+          successMessage.style.display = 'block';
+          showToast('Data berhasil disimpan ke Database!');
+          console.log('Server response:', result);
+          
+          // Matikan tombol agar tidak double submit
+          saveBtn.disabled = true;
+          genBtn.disabled = true;
+        } else {
+          // Jika gagal (misal email sudah ada)
+          alert('Gagal menyimpan: ' + result.error);
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Simpan Data User dan API Key';
+        }
+
+      } catch (error) {
+        console.error('Error:', error);
+        showToast('Terjadi kesalahan koneksi server');
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Simpan Data User dan API Key';
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'g') {
+        e.preventDefault();
+        genBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>
