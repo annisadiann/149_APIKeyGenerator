@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Register</title>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+    :root {
+      --bg1: #ffb6c1;
+      --bg2: #ffc1cc;
+      --card: #ffe4ec;
+      --primary: #ff69b4;
+      --primary-dark: #d63384;
+      --primary-contrast: #fff;
+      --muted: #9c5673;
+      --success: #2bb673;
+      --error: #dc3545;
+      --nav-bg: rgba(255, 255, 255, 0.85);
+    }
+
+    * { box-sizing: border-box; }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 80px 20px 20px 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Decorative blobs */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      mix-blend-mode: multiply;
+      filter: blur(40px);
+      opacity: 0.7;
+      z-index: 0;
+    }
+
+    .blob1 { top: 80px; left: 80px; width: 288px; height: 288px; background: #ffc1cc; animation: blob 7s infinite; }
+    .blob2 { top: 160px; right: 80px; width: 288px; height: 288px; background: #ffb6c1; animation: blob 7s infinite; animation-delay: 2s; }
+    .blob3 { bottom: 80px; left: 50%; width: 288px; height: 288px; background: #ff69b4; animation: blob 7s infinite; animation-delay: 4s; }
+
+    @keyframes blob {
+      0% { transform: translate(0px, 0px) scale(1); }
+      33% { transform: translate(30px, -50px) scale(1.1); }
+      66% { transform: translate(-20px, 20px) scale(0.9); }
+      100% { transform: translate(0px, 0px) scale(1); }
+    }
+
+    /* Navbar */
+    .navbar {
+      position: fixed; top: 0; left: 0; width: 100%;
+      background: var(--nav-bg); backdrop-filter: blur(10px);
+      padding: 15px 40px; display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05); z-index: 1000;
+    }
+    .nav-brand { font-weight: 700; font-size: 1.2rem; color: var(--primary); text-decoration: none; display: flex; align-items: center; gap: 8px; }
+    .nav-menu { display: flex; list-style: none; gap: 30px; margin: 0; padding: 0; }
+    .nav-link { text-decoration: none; color: var(--muted); font-weight: 600; font-size: 0.95rem; transition: color 0.3s ease; position: relative; }
+    .nav-link:hover, .nav-link.active { color: var(--primary); }
+    .nav-link::after { content: ''; position: absolute; width: 0; height: 2px; bottom: -4px; left: 0; background-color: var(--primary); transition: width 0.3s ease; }
+    .nav-link:hover::after, .nav-link.active::after { width: 100%; }
+    
+    .btn-login {
+      background: var(--primary); color: white; padding: 8px 20px; border-radius: 50px;
+      text-decoration: none; font-weight: 600; font-size: 0.9rem;
+      box-shadow: 0 4px 10px rgba(255, 105, 180, 0.3); transition: transform 0.2s;
+    }
+    .btn-login:hover { transform: translateY(-2px); }
+
+    /* Container */
+    .container {
+      position: relative; background: white;
+      box-shadow: 8px 8px 20px rgba(0,0,0,0.12), -8px -8px 20px rgba(255,255,255,0.6);
+      border-radius: 24px; border: 4px solid #ffc1cc; padding: 48px 32px;
+      width: 480px; max-width: 100%; z-index: 1;
+    }
+
+    /* Logo Section */
+    .logo-section { display: flex; justify-content: center; margin-bottom: 32px; }
+    .logo-wrapper {
+      width: 96px; height: 96px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), #d63384);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 24px rgba(255, 105, 180, 0.3);
+    }
+    .logo-icon { width: 48px; height: 48px; color: white; }
+
+    /* Title */
+    .header { text-align: center; margin-bottom: 32px; }
+    h1 { color: var(--primary-dark); font-size: 2rem; margin: 0 0 8px 0; font-weight: 700; }
+    .subtitle { color: #666; font-size: 0.95rem; margin: 0; }
+
+    /* Alert Messages */
+    .alert { padding: 14px 16px; border-radius: 12px; margin-bottom: 24px; font-size: 0.9rem; display: none; border: 2px solid; }
+    .alert.error { background: #f8d7da; border-color: #f5c2c7; color: #842029; display: block; }
+    
+    /* Form */
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-weight: 600; color: var(--primary-dark); margin-bottom: 8px; font-size: 0.9rem; }
+    .input-wrapper { position: relative; }
+    .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--primary); width: 20px; height: 20px; }
+    input[type="email"], input[type="password"] {
+      width: 100%; padding: 12px 14px 12px 44px; border: 2px solid #ffc1cc;
+      border-radius: 12px; font-size: 0.95rem; background: #fff; color: #333;
+      font-family: 'Poppins', sans-serif; transition: border-color 0.3s ease;
+    }
+    input:focus { outline: none; border-color: var(--primary); }
+    
+    /* Buttons */
+    .btn {
+      width: 100%; padding: 16px; font-size: 1.05rem; font-weight: 600; color: white;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border: none; border-radius: 12px; cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 4px 14px rgba(255, 105, 180, 0.4);
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 105, 180, 0.5); }
+    
+    /* Footer Links */
+    .footer-links { margin-top: 24px; text-align: center; }
+    .footer-links p { font-size: 0.9rem; color: #666; margin: 0 0 16px 0; }
+    .footer-links button {
+      background: none; border: none; color: var(--primary); font-weight: 600;
+      cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 0.9rem; text-decoration: none;
+    }
+    .footer-links button:hover { color: var(--primary-dark); text-decoration: underline; }
+    .footer-note { font-size: 0.85rem; color: #666; }
+    .footer-note span { font-weight: 600; color: var(--primary); }
+
+    @media (max-width: 560px) {
+      .container { padding: 32px 24px; width: 94%; }
+      h1 { font-size: 1.6rem; }
+      .navbar { padding: 15px 20px; flex-direction: column; gap: 10px; }
+      .nav-menu { gap: 15px; }
+      body { padding-top: 140px; }
+    }
+    svg { display: inline-block; vertical-align: middle; }
+  </style>
+</head>
+<body>
+  <!-- Decorative blobs -->
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand"><span>APIKEY</span></a>
+    <ul class="nav-menu">
+      <li><a href="index.html" class="nav-link">Beranda</a></li>
+      <li><a href="RegisterAdmin.html" class="nav-link active">Register Admin</a></li>
+    </ul>
+    <a href="LoginAdmin.html" class="btn-login">Admin Login</a>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="container" id="mainContainer">
+    <!-- Register Form -->
+    <div id="registerForm">
+      <!-- Logo Section -->
+      <div class="logo-section">
+        <div class="logo-wrapper">
+          <svg class="logo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+          </svg>
+        </div>
+      </div>
+
+      <div class="header">
+        <h1>Admin Register</h1>
+        <p class="subtitle">Create your admin account</p>
+      </div>
+
+      <div id="errorAlert" class="alert"></div>
+
+      <form id="adminRegisterForm">
+        <!-- Hanya Email & Password sesuai permintaan -->
+        
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            <input type="email" id="email" placeholder="admin@example.com" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            <input type="password" id="password" placeholder="Minimum 6 characters" required />
+          </div>
+        </div>
+
+        <button type="submit" class="btn">Register</button>
+      </form>
+
+      <div class="footer-links">
+        <p>Sudah punya akun? <button onclick="window.location.href='LoginAdmin.html'">Kembali ke Login</button></p>
+        <p class="footer-note">Protected by <span>Admin Security</span></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showError(message) {
+      const errorAlert = document.getElementById('errorAlert');
+      errorAlert.textContent = message;
+      errorAlert.className = 'alert error';
+      errorAlert.style.display = 'block'; // Pastikan tampil
+    }
+
+    document.getElementById('adminRegisterForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn = document.querySelector('.btn'); // Ambil tombol submit
+
+      if (!email || !password) {
+        showError('Mohon isi semua kolom');
+        return;
+      }
+
+      try {
+        // Ubah tombol jadi loading
+        const originalText = btn.textContent;
+        btn.textContent = 'Loading...';
+        btn.disabled = true;
+
+        // Konek ke Backend (index.js)
+        const response = await fetch('/register-admin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          alert("Registrasi Berhasil! Silakan Login.");
+          window.location.href = 'LoginAdmin.html';
+        } else {
+          showError(result.message || 'Gagal mendaftar');
+        }
+
+      } catch (err) {
+        console.error(err);
+        showError('Terjadi kesalahan koneksi ke server');
+      } finally {
+        // Kembalikan tombol seperti semula
+        btn.textContent = 'Register';
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
