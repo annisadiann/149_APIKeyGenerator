@@ -616,10 +616,11 @@ app.post('/checkapi', async (req, res) => {
 });
 
 // endpoint untuk list semua keys
+// endpoint untuk list semua keys
 app.get('/keys', async (req, res) => {
   try {
     const [rows] = await db.query(
-      'SELECT id, api_key, key_type, first_name, last_name, email, created_at, last_used, is_active FROM api_keys ORDER BY created_at DESC LIMIT 100'
+      'SELECT id, api_key, key_type, created_at, last_used, is_active FROM api_keys ORDER BY created_at DESC LIMIT 100'
     );
     
     res.json({ 
@@ -638,6 +639,7 @@ app.get('/keys', async (req, res) => {
 });
 
 // endpoint untuk deactivate key
+// endpoint untuk deactivate key
 app.post('/deactivate', async (req, res) => {
   try {
     const { apiKey } = req.body;
@@ -649,22 +651,40 @@ app.post('/deactivate', async (req, res) => {
       });
     }
     
-    const [result] = await db.query(
+    // Cek di tabel users dulu
+    const [userResult] = await db.query(
+      'UPDATE users SET is_active = FALSE WHERE api_key = ?',
+      [apiKey]
+    );
+    
+    if (userResult.affectedRows > 0) {
+      return res.json({ 
+        success: true,
+        message: 'API key deactivated (from users table)',
+        source: 'users'
+      });
+    }
+    
+    // Kalau tidak ada di users, cek di api_keys
+    const [keyResult] = await db.query(
       'UPDATE api_keys SET is_active = FALSE WHERE api_key = ?',
       [apiKey]
     );
     
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ 
-        success: false,
-        error: 'API key not found' 
+    if (keyResult.affectedRows > 0) {
+      return res.json({ 
+        success: true,
+        message: 'API key deactivated (from api_keys table)',
+        source: 'api_keys'
       });
     }
     
-    res.json({ 
-      success: true,
-      message: 'API key deactivated'
+    // Kalau tidak ada di kedua tabel
+    return res.status(404).json({ 
+      success: false,
+      error: 'API key not found in database'
     });
+    
   } catch (error) {
     console.error('Error deactivating key:', error);
     res.status(500).json({ 
@@ -675,6 +695,7 @@ app.post('/deactivate', async (req, res) => {
   }
 });
 
+// endpoint untuk reactivate key
 // endpoint untuk reactivate key
 app.post('/reactivate', async (req, res) => {
   try {
@@ -687,22 +708,40 @@ app.post('/reactivate', async (req, res) => {
       });
     }
     
-    const [result] = await db.query(
+    // Cek di tabel users dulu
+    const [userResult] = await db.query(
+      'UPDATE users SET is_active = TRUE WHERE api_key = ?',
+      [apiKey]
+    );
+    
+    if (userResult.affectedRows > 0) {
+      return res.json({ 
+        success: true,
+        message: 'API key reactivated (from users table)',
+        source: 'users'
+      });
+    }
+    
+    // Kalau tidak ada di users, cek di api_keys
+    const [keyResult] = await db.query(
       'UPDATE api_keys SET is_active = TRUE WHERE api_key = ?',
       [apiKey]
     );
     
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ 
-        success: false,
-        error: 'API key not found' 
+    if (keyResult.affectedRows > 0) {
+      return res.json({ 
+        success: true,
+        message: 'API key reactivated (from api_keys table)',
+        source: 'api_keys'
       });
     }
     
-    res.json({ 
-      success: true,
-      message: 'API key reactivated'
+    // Kalau tidak ada di kedua tabel
+    return res.status(404).json({ 
+      success: false,
+      error: 'API key not found in database'
     });
+    
   } catch (error) {
     console.error('Error reactivating key:', error);
     res.status(500).json({ 
@@ -712,7 +751,6 @@ app.post('/reactivate', async (req, res) => {
     });
   }
 });
-
 // endpoint info
 app.get('/info', (req, res) => {
   res.json({
